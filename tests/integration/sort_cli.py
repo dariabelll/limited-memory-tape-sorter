@@ -76,6 +76,7 @@ def run_case(
             str(input_path),
             str(output_path),
             str(config_path),
+            "--verify",
         ],
         text=True,
         stdout=subprocess.PIPE,
