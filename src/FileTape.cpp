@@ -1,6 +1,7 @@
 #include "FileTape.hpp"
 
 #include <stdexcept>
+#include <thread> 
 
 FileTape::FileTape(
     const std::filesystem::path& path,
@@ -49,22 +50,73 @@ std::size_t FileTape::valueCount() const {
 }
 
 std::int32_t FileTape::read() {
-    throw std::runtime_error("FileTape::read is not implemented yet");
+
+    if (currentPosition_ >= valueCount_) {
+        throw std::runtime_error("Cannot read past the end of tape: " + path_.string());
+    }
+
+    std::this_thread::sleep_for(config_.readDelay);
+
+    const auto byte_offset = static_cast<std::streamoff>(
+        currentPosition_ * sizeof(std::int32_t)
+    );
+
+    file_.clear();
+    file_.seekg(byte_offset);
+
+    std::int32_t value = 0;
+    file_.read(reinterpret_cast<char*>(&value), sizeof(value));
+
+    if (!file_) {
+        throw std::runtime_error("Failed to read from tape: " + path_.string());
+    }
+
+    return value;
 }
 
 void FileTape::write(std::int32_t value) {
-    (void)value;
-    throw std::runtime_error("FileTape::write is not implemented yet");
+    if (currentPosition_ > valueCount_) {
+        throw std::runtime_error("Cannot write past the end of tape: " + path_.string());
+    }
+
+    std::this_thread::sleep_for(config_.writeDelay);
+
+    const auto byte_offset = static_cast<std::streamoff>(
+        currentPosition_ * sizeof(std::int32_t)
+    );
+
+    file_.clear();
+    file_.seekp(byte_offset, std::ios::beg);
+
+    file_.write(reinterpret_cast<const char*>(&value), sizeof(value));
+
+    if (!file_) {
+        throw std::runtime_error("Failed to write to tape: " + path_.string());
+    }
+
+    if (currentPosition_ == valueCount_) {
+        ++valueCount_;
+    }
 }
 
 void FileTape::moveLeft() {
-    throw std::runtime_error("FileTape::moveLeft is not implemented yet");
+    std::this_thread::sleep_for(config_.moveDelay);
+
+    if (currentPosition_ == 0) {
+        throw std::runtime_error("Cannot move left from the beginning of tape: " + path_.string());
+    }
+
+    --currentPosition_;
 }
 
 void FileTape::moveRight() {
-    throw std::runtime_error("FileTape::moveRight is not implemented yet");
+    std::this_thread::sleep_for(config_.moveDelay);
+
+    ++currentPosition_;
 }
 
 void FileTape::rewind() {
-    throw std::runtime_error("FileTape::rewind is not implemented yet");
+    std::this_thread::sleep_for(config_.rewindDelay);
+
+    currentPosition_ = 0;
 }
