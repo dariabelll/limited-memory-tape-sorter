@@ -57,6 +57,8 @@ set_project_warnings(limited-memory-tape-sorter)
 if (BUILD_TESTS)
     include(FetchContent)
 
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
@@ -96,4 +98,18 @@ if (BUILD_TESTS)
 
         gtest_discover_tests(limited-memory-tape-sorter-tests)
     endif()
+
+    add_test(
+        NAME integration_sort_cli
+        COMMAND
+            ${Python3_EXECUTABLE}
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/sort_cli.py"
+            --exe "$<TARGET_FILE:limited-memory-tape-sorter>"
+            --work-dir "${CMAKE_CURRENT_BINARY_DIR}/integration_tests"
+    )
+
+    set_tests_properties(integration_sort_cli
+        PROPERTIES
+            DEPENDS limited-memory-tape-sorter
+    )
 endif()
