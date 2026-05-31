@@ -62,23 +62,25 @@ if (BUILD_TESTS)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp"
     )
 
-    add_executable(limited-memory-tape-sorter-tests
-        ${TEST_SOURCES}
-    )
+    if (TEST_SOURCES)
+        add_executable(limited-memory-tape-sorter-tests
+            ${TEST_SOURCES}
+        )
 
-    target_link_libraries(limited-memory-tape-sorter-tests
-        PRIVATE
-            limited_memory_tape_sorter_lib
-    )
+        target_link_libraries(limited-memory-tape-sorter-tests
+            PRIVATE
+                limited_memory_tape_sorter_lib
+        )
 
-    target_compile_options(limited-memory-tape-sorter-tests
-        PRIVATE
-            $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
-            $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    )
+        target_compile_options(limited-memory-tape-sorter-tests
+            PRIVATE
+                $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
+                $<$<CXX_COMPILER_ID:MSVC>:/W4>
+        )
 
-    add_test(
-        NAME limited-memory-tape-sorter-tests
-        COMMAND limited-memory-tape-sorter-tests
-    )
+        add_test(
+            NAME limited-memory-tape-sorter-tests
+            COMMAND limited-memory-tape-sorter-tests
+        )
+    endif()
 endif()
