@@ -89,6 +89,7 @@ void FileTape::write(std::int32_t value) {
     file_.seekp(byte_offset, std::ios::beg);
 
     file_.write(reinterpret_cast<const char*>(&value), sizeof(value));
+    file_.flush();
 
     if (!file_) {
         throw std::runtime_error("Failed to write to tape: " + path_.string());
@@ -100,16 +101,20 @@ void FileTape::write(std::int32_t value) {
 }
 
 void FileTape::moveLeft() {
-    std::this_thread::sleep_for(config_.moveDelay);
-
     if (currentPosition_ == 0) {
         throw std::runtime_error("Cannot move left from the beginning of tape: " + path_.string());
     }
+
+    std::this_thread::sleep_for(config_.moveDelay);
 
     --currentPosition_;
 }
 
 void FileTape::moveRight() {
+    if (currentPosition_ >= valueCount_) {
+        throw std::runtime_error("Cannot move right past the end of tape: " + path_.string());
+    }
+
     std::this_thread::sleep_for(config_.moveDelay);
 
     ++currentPosition_;
