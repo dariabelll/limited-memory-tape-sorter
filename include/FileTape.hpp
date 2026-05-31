@@ -8,12 +8,17 @@
 #include <filesystem>
 #include <fstream>
 
+enum class FileTapeMode {
+    open_existing,
+    create_or_overwrite
+};
+
 class FileTape final : public ITape {
 public:
     FileTape(
         const std::filesystem::path& path,
         const TapeConfig& config,
-        bool overwrite
+        FileTapeMode mode
     );
 
     std::int32_t read() override;

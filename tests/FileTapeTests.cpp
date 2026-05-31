@@ -43,7 +43,7 @@ protected:
 } 
 
 TEST_F(FileTapeTest, NewOverwrittenTapeIsEmpty) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     EXPECT_EQ(tape.valueCount(), 0);
 }
@@ -51,7 +51,7 @@ TEST_F(FileTapeTest, NewOverwrittenTapeIsEmpty) {
 TEST_F(FileTapeTest, OpensExistingTapeAndCountsValues) {
     writeRawValues(testFile_, {10, 20, 30, 40});
 
-    FileTape tape(testFile_, config_, false);
+    FileTape tape(testFile_, config_, FileTapeMode::open_existing);
 
     EXPECT_EQ(tape.valueCount(), 4);
 }
@@ -59,7 +59,7 @@ TEST_F(FileTapeTest, OpensExistingTapeAndCountsValues) {
 TEST_F(FileTapeTest, ReadsValuesSequentiallyWhenMovedRight) {
     writeRawValues(testFile_, {10, 20, 30});
 
-    FileTape tape(testFile_, config_, false);
+    FileTape tape(testFile_, config_, FileTapeMode::open_existing);
 
     EXPECT_EQ(tape.read(), 10);
 
@@ -73,7 +73,7 @@ TEST_F(FileTapeTest, ReadsValuesSequentiallyWhenMovedRight) {
 TEST_F(FileTapeTest, ReadDoesNotMoveHead) {
     writeRawValues(testFile_, {10, 20});
 
-    FileTape tape(testFile_, config_, false);
+    FileTape tape(testFile_, config_, FileTapeMode::open_existing);
 
     EXPECT_EQ(tape.read(), 10);
     EXPECT_EQ(tape.read(), 10);
@@ -85,7 +85,7 @@ TEST_F(FileTapeTest, ReadDoesNotMoveHead) {
 }
 
 TEST_F(FileTapeTest, WritesValuesAndReadsThemBack) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.moveRight();
@@ -109,7 +109,7 @@ TEST_F(FileTapeTest, WritesValuesAndReadsThemBack) {
 }
 
 TEST_F(FileTapeTest, WriteDoesNotMoveHead) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.write(20);
@@ -122,7 +122,7 @@ TEST_F(FileTapeTest, WriteDoesNotMoveHead) {
 }
 
 TEST_F(FileTapeTest, CanOverwriteExistingValue) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.moveRight();
@@ -143,7 +143,7 @@ TEST_F(FileTapeTest, CanOverwriteExistingValue) {
 }
 
 TEST_F(FileTapeTest, MoveLeftMovesToPreviousCell) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.moveRight();
@@ -157,7 +157,7 @@ TEST_F(FileTapeTest, MoveLeftMovesToPreviousCell) {
 }
 
 TEST_F(FileTapeTest, RewindMovesToFirstCell) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.moveRight();
@@ -173,19 +173,19 @@ TEST_F(FileTapeTest, RewindMovesToFirstCell) {
 }
 
 TEST_F(FileTapeTest, MoveLeftFromBeginningThrows) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     EXPECT_THROW(tape.moveLeft(), std::runtime_error);
 }
 
 TEST_F(FileTapeTest, ReadFromEmptyTapeThrows) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     EXPECT_THROW(tape.read(), std::runtime_error);
 }
 
 TEST_F(FileTapeTest, ReadPastEndThrows) {
-    FileTape tape(testFile_, config_, true);
+    FileTape tape(testFile_, config_, FileTapeMode::create_or_overwrite);
 
     tape.write(10);
     tape.moveRight();
@@ -195,7 +195,7 @@ TEST_F(FileTapeTest, ReadPastEndThrows) {
 
 TEST_F(FileTapeTest, OpeningMissingExistingTapeThrows) {
     EXPECT_THROW(
-        FileTape tape(testFile_, config_, false),
+        FileTape tape(testFile_, config_, FileTapeMode::open_existing),
         std::runtime_error
     );
 }
@@ -208,7 +208,7 @@ TEST_F(FileTapeTest, InvalidBinaryFileSizeThrows) {
     }
 
     EXPECT_THROW(
-        FileTape tape(testFile_, config_, false),
+        FileTape tape(testFile_, config_, FileTapeMode::open_existing),
         std::runtime_error
     );
 }

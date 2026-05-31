@@ -47,7 +47,7 @@ void TapeSorter::sort(
         split_input_into_sorted_parts(input_path);
 
     if (parts.empty()) {
-        FileTape output_tape(output_path, config_, true);
+        FileTape output_tape(output_path, config_, FileTapeMode::create_or_overwrite);
         return;
     }
 
@@ -61,7 +61,7 @@ void TapeSorter::sort(
 std::vector<SortedTapePart> TapeSorter::split_input_into_sorted_parts(
     const std::filesystem::path& input_path
 ) {
-    FileTape input_tape(input_path, config_, false);
+    FileTape input_tape(input_path, config_, FileTapeMode::open_existing);
 
     const std::size_t values_per_part =
         config_.memoryLimitBytes / sizeof(std::int32_t);
@@ -98,7 +98,7 @@ std::vector<SortedTapePart> TapeSorter::split_input_into_sorted_parts(
         const std::filesystem::path part_path =
             make_temp_tape_path("sorted_part", part_index);
 
-        FileTape part_tape(part_path, config_, true);
+        FileTape part_tape(part_path, config_, FileTapeMode::create_or_overwrite);
 
         for (std::size_t i = 0; i < buffer.size(); ++i) {
             part_tape.write(buffer[i]);
@@ -200,7 +200,7 @@ SortedTapePart TapeSorter::merge_sorted_part_group(
     const std::filesystem::path output_path =
         make_temp_tape_path("merged_part", merge_index);
 
-    FileTape output_tape(output_path, config_, true);
+    FileTape output_tape(output_path, config_, FileTapeMode::create_or_overwrite);
 
     std::vector<std::unique_ptr<FileTape>> input_tapes;
     std::vector<std::size_t> remaining_values;
@@ -212,7 +212,7 @@ SortedTapePart TapeSorter::merge_sorted_part_group(
 
     for (const SortedTapePart& part : parts) {
         input_tapes.push_back(
-            std::make_unique<FileTape>(part.path, config_, false)
+            std::make_unique<FileTape>(part.path, config_, FileTapeMode::open_existing)
         );
 
         remaining_values.push_back(part.value_count);
@@ -283,8 +283,8 @@ void TapeSorter::copy_to_output_tape(
     const SortedTapePart& sorted_part,
     const std::filesystem::path& output_path
 ) {
-    FileTape input_tape(sorted_part.path, config_, false);
-    FileTape output_tape(output_path, config_, true);
+    FileTape input_tape(sorted_part.path, config_, FileTapeMode::open_existing);
+    FileTape output_tape(output_path, config_, FileTapeMode::create_or_overwrite);
 
     for (std::size_t i = 0; i < sorted_part.value_count; ++i) {
         output_tape.write(input_tape.read());

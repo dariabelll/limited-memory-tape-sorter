@@ -6,18 +6,16 @@
 FileTape::FileTape(
     const std::filesystem::path& path,
     const TapeConfig& config,
-    bool overwrite
-)
-    : path_(path),
-      config_(config)
-{
-    std::ios::openmode mode = std::ios::binary | std::ios::in | std::ios::out;
+    FileTapeMode mode
+) : path_(path), config_(config) {
 
-    if (overwrite) {
-        mode |= std::ios::trunc;
+    std::ios::openmode open_mode = std::ios::binary | std::ios::in | std::ios::out;
+
+    if (mode == FileTapeMode::create_or_overwrite) {
+        open_mode |= std::ios::trunc;
     }
 
-    file_.open(path_, mode);
+    file_.open(path_, open_mode);
 
     if (!file_.is_open()) {
         throw std::runtime_error("Failed to open tape file: " + path_.string());
