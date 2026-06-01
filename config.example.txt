@@ -1,0 +1,15 @@
+# Time model for the emulated tape device.
+# All delays are measured in milliseconds.
+read_delay_ms=0
+write_delay_ms=0
+move_delay_ms=0
+rewind_delay_ms=0
+
+# Sorting buffer limit.
+# The sorter loads at most memory_limit_bytes / sizeof(int32_t)
+# values from the input tape at once.
+memory_limit_bytes=1048576
+
+# Temporary tape files are created here during sorting.
+# The directory is created automatically if it does not exist.
+tmp_dir=tmp
