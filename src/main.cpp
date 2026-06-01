@@ -1,3 +1,4 @@
+#include "SortReport.hpp"
 #include "TapeConfig.hpp"
 #include "TapeSorter.hpp"
 #include "TapeVerifier.hpp"
@@ -6,6 +7,52 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+
+namespace {
+
+void print_report(
+    const SortReport& report,
+    bool verification_enabled,
+    bool verification_passed
+) {
+    std::cout << "Sorting completed\n\n";
+
+    std::cout << "Tape sorting summary\n";
+    std::cout << "--------------------\n";
+
+    std::cout << "Input tape:\n";
+    std::cout << "  values: " << report.input_value_count << '\n';
+
+    std::cout << "\nMemory:\n";
+    std::cout << "  limit: " << report.memory_limit_bytes << " bytes\n";
+    std::cout << "  max loaded values: " << report.max_values_in_memory << '\n';
+
+    std::cout << "\nTemporary tapes:\n";
+    std::cout << "  initial sorted tapes: "
+              << report.initial_sorted_tape_count << '\n';
+    std::cout << "  merged tapes: " << report.merged_tape_count << '\n';
+    std::cout << "  total created: "
+              << report.total_temporary_tape_count << '\n';
+
+    std::cout << "\nMerge phase:\n";
+    std::cout << "  max tapes per merge: "
+              << report.max_tapes_per_merge << '\n';
+    std::cout << "  merge rounds: " << report.merge_round_count << '\n';
+    std::cout << "  pairwise merge would need: "
+              << report.pairwise_merge_round_estimate
+              << " rounds\n";
+
+    std::cout << "\nOutput tape:\n";
+    std::cout << "  values: " << report.output_value_count << '\n';
+
+    if (verification_enabled) {
+        std::cout << "  verification: "
+                  << (verification_passed ? "OK" : "FAILED")
+                  << '\n';
+    }
+}
+
+} 
 
 int main(int argc, char* argv[]) {
     try {
@@ -47,20 +94,21 @@ int main(int argc, char* argv[]) {
         const TapeConfig config = TapeConfig::loadFromFile(config_path);
 
         TapeSorter sorter(config);
-        sorter.sort(input_path, output_path);
+        const SortReport report = sorter.sort(input_path, output_path);
 
-        std::cout << "Sorting completed\n";
+        bool verification_passed = false;
 
         if (verify) {
             TapeVerifier verifier(config);
+            verification_passed = verifier.is_sorted(output_path);
 
-            if (!verifier.is_sorted(output_path)) {
-                std::cerr << "Verification failed: output tape is not sorted\n";
+            if (!verification_passed) {
+                print_report(report, true, false);
                 return 1;
             }
-
-            std::cout << "Verification completed\n";
         }
+
+        print_report(report, verify, verification_passed);
 
         return 0;
 

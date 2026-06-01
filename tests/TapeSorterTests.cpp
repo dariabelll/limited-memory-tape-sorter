@@ -1,5 +1,6 @@
 #include "TapeConfig.hpp"
 #include "TapeSorter.hpp"
+#include "SortReport.hpp"
 
 #include <gtest/gtest.h>
 
@@ -153,5 +154,30 @@ TEST_F(TapeSorterTests, ThrowsWhenMemoryCannotStoreOneValue) {
     EXPECT_THROW(
         sorter.sort(input_path_, output_path_),
         std::runtime_error
+    );
+}
+
+TEST_F(TapeSorterTests, ReturnsUsefulSortReport) {
+    write_values(input_path_, {7, 1, 5, 3, 9, 2});
+
+    config_.memoryLimitBytes = 2 * sizeof(std::int32_t);
+
+    TapeSorter sorter(config_);
+    const SortReport report = sorter.sort(input_path_, output_path_);
+
+    EXPECT_EQ(report.input_value_count, 6);
+    EXPECT_EQ(report.output_value_count, 6);
+
+    EXPECT_EQ(report.memory_limit_bytes, config_.memoryLimitBytes);
+    EXPECT_EQ(report.max_values_in_memory, 2);
+
+    EXPECT_EQ(report.initial_sorted_tape_count, 3);
+    EXPECT_GT(report.total_temporary_tape_count, 0);
+
+    EXPECT_GE(report.max_tapes_per_merge, 2);
+    EXPECT_GT(report.merge_round_count, 0);
+    EXPECT_GE(
+        report.pairwise_merge_round_estimate,
+        report.merge_round_count
     );
 }

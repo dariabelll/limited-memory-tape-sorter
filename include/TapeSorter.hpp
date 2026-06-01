@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SortReport.hpp"
 #include "SortedTapePart.hpp"
 #include "TapeConfig.hpp"
 
@@ -12,7 +13,7 @@ class TapeSorter {
 public:
     explicit TapeSorter(TapeConfig config);
 
-    void sort(
+    SortReport sort(
         const std::filesystem::path& input_path,
         const std::filesystem::path& output_path
     );
@@ -22,11 +23,12 @@ private:
         const std::filesystem::path& input_path
     );
 
-    SortedTapePart merge_until_single_part(
-        std::vector<SortedTapePart> parts
+    SortedTapePart merge_parts_to_single_tape(
+        std::vector<SortedTapePart> parts,
+        SortReport& report
     );
 
-    SortedTapePart merge_sorted_part_group(
+    SortedTapePart merge_part_group(
         const std::vector<SortedTapePart>& parts,
         std::size_t merge_index
     );
