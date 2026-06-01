@@ -181,3 +181,19 @@ TEST_F(TapeSorterTests, ReturnsUsefulSortReport) {
         report.merge_round_count
     );
 }
+
+TEST_F(TapeSorterTests, RemovesTemporaryTapesAfterSuccessfulSort) {
+    write_values(input_path_, {7, 1, 5, 3, 9, 2, 8, 4});
+
+    config_.memoryLimitBytes = 2 * sizeof(std::int32_t);
+
+    TapeSorter sorter(config_);
+    sorter.sort(input_path_, output_path_);
+
+    ASSERT_TRUE(std::filesystem::exists(tmp_dir_));
+
+    for (const auto& entry : std::filesystem::directory_iterator(tmp_dir_)) {
+        FAIL() << "temporary file was not removed: "
+               << entry.path().string();
+    }
+}
