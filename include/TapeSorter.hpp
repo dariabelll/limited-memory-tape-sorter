@@ -3,6 +3,7 @@
 #include "SortReport.hpp"
 #include "SortedTapePart.hpp"
 #include "TapeConfig.hpp"
+#include "TemporaryTapeCleaner.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -20,17 +21,20 @@ public:
 
 private:
     std::vector<SortedTapePart> split_input_into_sorted_parts(
-        const std::filesystem::path& input_path
+        const std::filesystem::path& input_path,
+        TemporaryTapeCleaner& cleaner
     );
 
     SortedTapePart merge_parts_to_single_tape(
         std::vector<SortedTapePart> parts,
-        SortReport& report
+        SortReport& report,
+        TemporaryTapeCleaner& cleaner
     );
 
     SortedTapePart merge_part_group(
         const std::vector<SortedTapePart>& parts,
-        std::size_t merge_index
+        std::size_t merge_index,
+        TemporaryTapeCleaner& cleaner
     );
 
     void copy_to_output_tape(

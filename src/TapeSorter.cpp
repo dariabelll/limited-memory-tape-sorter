@@ -1,6 +1,7 @@
 #include "TapeSorter.hpp"
 
 #include "FileTape.hpp"
+#include "TemporaryTapeCleaner.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -44,13 +45,15 @@ SortReport TapeSorter::sort(
 ) {
     std::filesystem::create_directories(config_.tmpDir);
 
+    TemporaryTapeCleaner cleaner;
+
     SortReport report;
     report.memory_limit_bytes = config_.memoryLimitBytes;
     report.max_values_in_memory =
         config_.memoryLimitBytes / sizeof(std::int32_t);
 
     std::vector<SortedTapePart> parts =
-        split_input_into_sorted_parts(input_path);
+        split_input_into_sorted_parts(input_path, cleaner);
 
     report.initial_sorted_tape_count = parts.size();
     report.total_temporary_tape_count = parts.size();
@@ -70,19 +73,20 @@ SortReport TapeSorter::sort(
     }
 
     SortedTapePart final_part =
-        merge_parts_to_single_tape(std::move(parts), report);
+        merge_parts_to_single_tape(std::move(parts), report, cleaner);
 
     copy_to_output_tape(final_part, output_path);
 
     report.output_value_count = final_part.value_count;
 
-    std::filesystem::remove(final_part.path);
+    cleaner.remove(final_part.path);
 
     return report;
 }
 
 std::vector<SortedTapePart> TapeSorter::split_input_into_sorted_parts(
-    const std::filesystem::path& input_path
+    const std::filesystem::path& input_path,
+    TemporaryTapeCleaner& cleaner
 ) {
     FileTape input_tape(
         input_path,
@@ -131,6 +135,8 @@ std::vector<SortedTapePart> TapeSorter::split_input_into_sorted_parts(
             FileTapeMode::create_or_overwrite
         );
 
+        cleaner.track(part_path);
+
         for (std::size_t i = 0; i < buffer.size(); ++i) {
             part_tape.write(buffer[i]);
 
@@ -152,7 +158,8 @@ std::vector<SortedTapePart> TapeSorter::split_input_into_sorted_parts(
 
 SortedTapePart TapeSorter::merge_parts_to_single_tape(
     std::vector<SortedTapePart> parts,
-    SortReport& report
+    SortReport& report,
+    TemporaryTapeCleaner& cleaner
 ) {
     if (parts.empty()) {
         throw std::runtime_error("cannot merge empty sorted tape part list");
@@ -220,7 +227,7 @@ SortedTapePart TapeSorter::merge_parts_to_single_tape(
             }
 
             SortedTapePart merged_part =
-                merge_part_group(group, merge_index);
+                merge_part_group(group, merge_index, cleaner);
 
             next_parts.push_back(merged_part);
 
@@ -229,7 +236,7 @@ SortedTapePart TapeSorter::merge_parts_to_single_tape(
             ++report.total_temporary_tape_count;
 
             for (const SortedTapePart& part : group) {
-                std::filesystem::remove(part.path);
+                cleaner.remove(part.path);
             }
         }
 
@@ -241,7 +248,8 @@ SortedTapePart TapeSorter::merge_parts_to_single_tape(
 
 SortedTapePart TapeSorter::merge_part_group(
     const std::vector<SortedTapePart>& parts,
-    std::size_t merge_index
+    std::size_t merge_index,
+    TemporaryTapeCleaner& cleaner
 ) {
     if (parts.empty()) {
         throw std::runtime_error("cannot merge empty sorted tape part group");
@@ -259,6 +267,8 @@ SortedTapePart TapeSorter::merge_part_group(
         config_,
         FileTapeMode::create_or_overwrite
     );
+
+    cleaner.track(output_path);
 
     std::vector<std::unique_ptr<FileTape>> input_tapes;
     std::vector<std::size_t> remaining_values;
